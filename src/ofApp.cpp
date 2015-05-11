@@ -1,42 +1,111 @@
 #include "ofApp.h"
 
+#include <iostream>
+#include <complex.h>
+
+#include <math.h>
+
+
 //-----------------------------------------------------------------------------------------
 //
 void ofApp::setup()
 {
 	fontSmall.loadFont("Fonts/DIN.otf", 8 );
-	
+   // default_random_engine generator;
+    //normal_distribution<double> distribution(0,1);
+    
 	// Give us a starting point for the camera
 	camera.setNearClip(0.01f);
-	camera.setPosition( 0, 4, 10 );
+	camera.setPosition( 0, 5 , -10 );
+    camera.setGlobalPosition(0, 8, 30);
 	camera.setMovementMaxSpeed( 0.1f );
+    W = 100;
+    H = 100;
     
-	
+    
+    for(int x = 0; x < W; x++){
+        for (int y = 0; y< H; y++){
+            
+            ofPoint vert = ofPoint(x - W/2 , y - H/2, 0);
+            mesh.addVertex(vert);
+            mesh.addColor( ofColor( 0, 0, 0 ) );
+        }
+        
+        
+    }
+    
+    
+    for (int x = 0 ; x < W-1; x ++) {
+        for (int y= 0; y < H-1; y++) {
+            
+            
+            
+            int index1 = x * W + y;
+            int index2 = (x+1) * W + y;
+            int index3 = x * W+(y+1);
+            int index4 = (x+1) * W + (y + 1);
+            
+            
+            mesh.addTriangle(index1, index2, index3);
+            mesh.addTriangle(index3, index2, index4);
+        }
+        
+    }
+    
+    setNormals(mesh);
+    
 }
 
 //-----------------------------------------------------------------------------------------
 //
 void ofApp::update()
 {
+    float time = ofGetElapsedTimef();	//Get time
+    //Change vertices
+    
+    for (int y=0; y<H; y++) {
+        for (int x=0; x<W; x++) {
+            int i = x + W * y;			//Vertex index
+            ofPoint p = mesh.getVertex( i );
+
+
+            freq = sqrt(g * k);
+            float height = amp * sin(k * x - freq * time);
+            p.z  = 4 * ofSignedNoise(x * .005, y * .02, height );
+            mesh.setVertex( i, p );
+            
+            //Change color of vertex
+            mesh.setColor( i, ofColor( 43, 100, ofMap(p.z,-4, 4, 170, 255) ));
+        }
+    }
+    setNormals( mesh );
+ 
 }
 
 //-----------------------------------------------------------------------------------------
 //
 void ofApp::draw()
 {
-	ofBackgroundGradient( ofColor(40,40,40), ofColor(0,0,0), OF_GRADIENT_CIRCULAR);	
+	ofBackgroundGradient( ofColor::skyBlue, ofColor(255), OF_GRADIENT_LINEAR);
 	
 	ofEnableDepthTest();
 	
 	camera.begin();
 	
-		// draw a grid on the floor
-		ofSetColor( ofColor(60) );
-		ofPushMatrix();
-			ofRotate(90, 0, 0, -1);
-			ofDrawGridPlane( 10 );
-		ofPopMatrix();
-    mesh.draw();
+//    ofSetColor( ofColor(60));
+//		ofPushMatrix();
+//			ofRotate(90, 0, 0, -1);
+//            ofDrawGridPlane(30);
+//        ofPopMatrix();
+    
+    
+    ofPushMatrix();
+    ofRotate(90, 1, 0, 0);
+
+
+        mesh.draw();
+    
+    ofPopMatrix();
 	
 	camera.end();
 
@@ -45,6 +114,7 @@ void ofApp::draw()
 
 
 	fontSmall.drawStringShadowed(ofToString(ofGetFrameRate(),2), ofGetWidth()-35, ofGetHeight() - 6, ofColor::whiteSmoke, ofColor::black );
+
 }
 
 //-----------------------------------------------------------------------------------------//
