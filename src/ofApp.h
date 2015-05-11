@@ -1,5 +1,5 @@
 #pragma once
-#include "stdio.h"
+
 #include "ofMain.h"
 #include "ofxGui.h"
 
@@ -29,7 +29,10 @@ class ofApp : public ofBaseApp
     int H ;
     float amp = 2;
     float freq;
-    float k = 2*PI/80;
+    float k = 2*PI/150;
     float g = 9.8;
-    
+    ofLight pointLight;
+    ofLight pointLight2;
+    ofLight pointLight3;
+    ofMaterial material;
 };

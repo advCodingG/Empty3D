@@ -1,9 +1,5 @@
 #include "ofApp.h"
 
-#include <iostream>
-#include <complex.h>
-
-#include <math.h>
 
 
 //-----------------------------------------------------------------------------------------
@@ -11,18 +7,29 @@
 void ofApp::setup()
 {
 	fontSmall.loadFont("Fonts/DIN.otf", 8 );
-   // default_random_engine generator;
-    //normal_distribution<double> distribution(0,1);
+    //resolution
+    W = 300;
+    H = 300;
     
-	// Give us a starting point for the camera
 	camera.setNearClip(0.01f);
-	camera.setPosition( 0, 5 , -10 );
-    camera.setGlobalPosition(0, 8, 30);
+    //the starting point of the camera
+    camera.setPosition( 0, 20 , 180 );
 	camera.setMovementMaxSpeed( 0.1f );
-    W = 100;
-    H = 100;
+   
+    //material and light setup
+    material.setShininess( 100 );
+    material.setSpecularColor(ofColor(40, 100,255,  250));
     
+    pointLight.setDiffuseColor( ofFloatColor(.85, .85, .55) );
+    pointLight.setSpecularColor( ofFloatColor(1.f, 1.f, 1.f));
     
+    pointLight2.setDiffuseColor( ofFloatColor( 238.f/255.f, 57.f/255.f, 135.f/255.f ));
+    pointLight2.setSpecularColor(ofFloatColor(.8f, .8f, .9f));
+    
+    pointLight3.setDiffuseColor( ofFloatColor(40.f/255.f,110/255.f,135.f/255.f) );
+    pointLight3.setSpecularColor( ofFloatColor(.2, .2, .2) );
+    
+    //initialize points and color to the mesh
     for(int x = 0; x < W; x++){
         for (int y = 0; y< H; y++){
             
@@ -34,17 +41,14 @@ void ofApp::setup()
         
     }
     
-    
+    //initializ small triangles that make up the mesh
     for (int x = 0 ; x < W-1; x ++) {
         for (int y= 0; y < H-1; y++) {
-            
-            
             
             int index1 = x * W + y;
             int index2 = (x+1) * W + y;
             int index3 = x * W+(y+1);
             int index4 = (x+1) * W + (y + 1);
-            
             
             mesh.addTriangle(index1, index2, index3);
             mesh.addTriangle(index3, index2, index4);
@@ -60,25 +64,50 @@ void ofApp::setup()
 //
 void ofApp::update()
 {
-    float time = ofGetElapsedTimef();	//Get time
-    //Change vertices
-    
+    float time = ofGetElapsedTimef();
+
     for (int y=0; y<H; y++) {
         for (int x=0; x<W; x++) {
             int i = x + W * y;			//Vertex index
             ofPoint p = mesh.getVertex( i );
 
-
+            //the following equation is based on the linear theory of ocean surface waves
+            //read more details on http://oceanworld.tamu.edu/resources/ocng_textbook/chapter16/chapter16_01.htm
+            
             freq = sqrt(g * k);
-            float height = amp * sin(k * x - freq * time);
-            p.z  = 4 * ofSignedNoise(x * .005, y * .02, height );
+            float height = amp * sin(k * x - freq * time * 2);
+
+            // the z position of each mesh vertex are determined by the x position, the height that's caculated by the linear theory of the ocean suface wave, and ofSignedNoise, which returns a number between -1 and 1
+            p.z  = (W-x)/7.f * ofSignedNoise(height * .001, y*.007, height);
+            
+          //  p.z  = (W-x)/15.f * height * ofSignedNoise(height * .001, y*.007 );
+                
             mesh.setVertex( i, p );
             
-            //Change color of vertex
-            mesh.setColor( i, ofColor( 43, 100, ofMap(p.z,-4, 4, 170, 255) ));
+            //The color of vertex changes as the z position goes up and down
+            mesh.setColor(i, ofFloatColor( (abs(height) + .5) * 30/255.f,(abs(height) + .5) * 80/255.f,(abs(height) + .5)*100/255.f));
+            
+//            mesh.setColor( i, ofFloatColor(
+//                                ofMap(height, amp, -amp, 60, 100)/255.f,
+//                               1- ofMap(height, amp, -amp, 200, 250)/255.f,
+//                                ofMap(height, amp, -amp, 200, 250)/255.f
+//                                           ));
+       
+            
         }
     }
     setNormals( mesh );
+    
+    //the light moves position and changes color
+    pointLight.setPosition((ofGetWidth()*.5)+ cos(ofGetElapsedTimef()*.5)*(ofGetWidth()*.3), ofGetHeight()/2, 500);
+    pointLight2.setPosition((ofGetWidth()*.5)+ cos(ofGetElapsedTimef()*.15)*(ofGetWidth()*.3),
+                            ofGetHeight()*.5 + sin(ofGetElapsedTimef()*.7)*(ofGetHeight()), -300);
+    
+    pointLight3.setPosition(
+                            cos(ofGetElapsedTimef()*1.5) * ofGetWidth()*.5,
+                            sin(ofGetElapsedTimef()*1.5f) * ofGetWidth()*.5,
+                            cos(ofGetElapsedTimef()*.2) * ofGetWidth()
+                            );
  
 }
 
@@ -89,22 +118,26 @@ void ofApp::draw()
 	ofBackgroundGradient( ofColor::skyBlue, ofColor(255), OF_GRADIENT_LINEAR);
 	
 	ofEnableDepthTest();
-	
+    
+    ofEnableLighting();
+    pointLight.enable();
+   pointLight2.enable();
+   pointLight3.enable();
 	camera.begin();
 	
+    //draw a grid
 //    ofSetColor( ofColor(60));
 //		ofPushMatrix();
 //			ofRotate(90, 0, 0, -1);
-//            ofDrawGridPlane(30);
+//            ofDrawGridPlane(300);
 //        ofPopMatrix();
     
+    material.begin();
     
+    //rotate the plane so that y axis becomes the z axis
     ofPushMatrix();
     ofRotate(90, 1, 0, 0);
-
-
-        mesh.draw();
-    
+    mesh.draw();
     ofPopMatrix();
 	
 	camera.end();
