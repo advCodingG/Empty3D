@@ -72,20 +72,23 @@ void ofApp::update()
             ofPoint p = mesh.getVertex( i );
 
             //the following equation is based on the linear theory of ocean surface waves
+            // assuming the amplitude of waves on the water surface is infinitely small so the surface is almost exactly a plane. To simplify the mathematics, we can also assume that the flow is 2-dimensional with waves traveling in the x-direction.
             //read more details on http://oceanworld.tamu.edu/resources/ocng_textbook/chapter16/chapter16_01.htm
             
             freq = sqrt(g * k);
             float height = amp * sin(k * x - freq * time * 2);
 
             // the z position of each mesh vertex are determined by the x position, the height that's caculated by the linear theory of the ocean suface wave, and ofSignedNoise, which returns a number between -1 and 1
-            p.z  = (W-x)/7.f * ofSignedNoise(height * .001, y*.007, height);
+            p.z  = (W-x)/7.f * ofSignedNoise(height * .001, y*.007, height)+ofSignedNoise(x * .01, y*.08, height);
             
           //  p.z  = (W-x)/15.f * height * ofSignedNoise(height * .001, y*.007 );
                 
             mesh.setVertex( i, p );
             
             //The color of vertex changes as the z position goes up and down
-            mesh.setColor(i, ofFloatColor( (abs(height) + .5) * 30/255.f,(abs(height) + .5) * 80/255.f,(abs(height) + .5)*100/255.f));
+            mesh.setColor(i, ofFloatColor( (abs(height) + .5) * 30/255.f,
+                                          (abs(height) + .5) * 80/255.f,
+                                          (abs(height) + .5)*100/255.f));
             
 //            mesh.setColor( i, ofFloatColor(
 //                                ofMap(height, amp, -amp, 60, 100)/255.f,
